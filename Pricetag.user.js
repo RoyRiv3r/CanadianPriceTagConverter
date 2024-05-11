@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Price Converter with Tax for Specific Websites
 // @namespace    http://tampermonkey.net/
-// @version      0.8
+// @version      0.9
 // @description  Convert price tags on websites
 // @author       Nears
 // @match        *://*.newegg.ca/*
@@ -13,16 +13,21 @@
 // ==/UserScript==
 (async function() {
     'use strict';
-    // Define the tax rate
+
     const TAX_RATE = 0.14975;
-    // Fetch the Euro conversion rate
+
     async function fetchExchangeRate() {
-        const requestURL = 'https://api.exchangerate.host/convert?from=CAD&to=EUR';
+        const API_KEY = 'YOUR_API_KEY'; //API from https://v6.exchangerate-api.com
+        const requestURL = `https://v6.exchangerate-api.com/v6/${API_KEY}/pair/CAD/EUR`;
         const response = await fetch(requestURL);
         const data = await response.json();
-        return data.result;
+        console.log('Exchange rate data:', data);
+        return data.conversion_rate;
     }
+
     const CAD_TO_EURO = await fetchExchangeRate();
+    console.log('CAD_TO_EURO:', CAD_TO_EURO);
+
     const euroFormatter = new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency: 'EUR',
@@ -48,8 +53,11 @@
             const supElement = element.querySelector('sup');
             if(strongElement && supElement) {
                 const price = parseFloat(`${strongElement.textContent.replace(',', '')}${supElement.textContent}`);
+                console.log('Parsed price:', price);
                 const convertedPrice = convertPrice(price);
                 const euroPrice = convertToEuros(convertedPrice);
+                console.log('Converted price:', convertedPrice);
+                console.log('Euro price:', euroPrice);
                 const priceParts = convertedPrice.toString().split(".");
                 let taxedPriceEl = htmlToElement(`
             <li style="margin: 0">
